@@ -61,6 +61,7 @@ pub struct Blackhole {
 
     spi_buffer_addr: AxiData,
     telemetry_struct_addr: AxiData,
+    telemetry_data_addr: AxiData,
     scratch_ram_base: AxiData,
 }
 
@@ -142,6 +143,7 @@ impl Blackhole {
 
             spi_buffer_addr: arc_if.axi_translate("arc_ss.reset_unit.SCRATCH_RAM[10]")?,
             telemetry_struct_addr: arc_if.axi_translate("arc_ss.reset_unit.SCRATCH_RAM[13]")?,
+            telemetry_data_addr: arc_if.axi_translate("arc_ss.reset_unit.SCRATCH_RAM[12]")?,
             scratch_ram_base: arc_if.axi_translate("arc_ss.reset_unit.SCRATCH_RAM[0]")?,
 
             arc_if: Arc::new(arc_if),
@@ -752,7 +754,26 @@ impl ChipImpl for Blackhole {
             ));
         }
 
-        // Read the data block from the address in sctrach 13
+        // Get address of the telemetry data array. The firmware publishes this pointer
+        // separately from the table struct in SCRATCH_RAM[12] (TELEMETRY_DATA_REG_ADDR).
+        // The data array is NOT guaranteed to sit immediately after the tag table, so we
+        // must read the published pointer rather than derive the address from the struct.
+        let mut scratch_reg_12_value = [0u8; 4];
+        self.axi_read_field(&self.telemetry_data_addr, &mut scratch_reg_12_value)?;
+        let telem_data_addr = u32::from_le_bytes(scratch_reg_12_value);
+        if telem_data_addr == 0 {
+            return Err(PlatformError::ArcNotReady(
+                crate::error::ArcReadyError::BootIncomplete,
+                BtWrapper::capture(),
+            ));
+        }
+        if !(0x10000000..=0x1007FFFF).contains(&telem_data_addr) {
+            return Err(PlatformError::Generic(
+                format!("Invalid Telemetry data address: 0x{telem_data_addr:08x}"),
+                BtWrapper::capture(),
+            ));
+        }
+
         // Parse out the version and entry count before reading the data block
         let _version = self.axi_read32(telem_struct_addr as u64)?;
         let entry_count = self.axi_read32(telem_struct_addr as u64 + 4)?;
@@ -761,18 +782,24 @@ impl ChipImpl for Blackhole {
         // For now, assume version 1 and parse data block as is
         // let version = u32::from_le_bytes(version);
 
-        // Get telemetry tags data block and telemetry data data block
-        let mut telemetry_tags_data_block: Vec<u8> = vec![0u8; (entry_count + 1) as usize * 4];
-        let mut telem_data_block: Vec<u8> = vec![0u8; (entry_count + 1) as usize * 4];
-
+        // Read the tag table (tag -> offset mapping) which immediately follows the
+        // version and entry_count fields in the table struct.
+        let mut telemetry_tags_data_block: Vec<u8> = vec![0u8; entry_count as usize * 4];
         self.axi_read(
             (telem_struct_addr + 8) as u64,
             &mut telemetry_tags_data_block,
         )?;
-        self.axi_read(
-            (telem_struct_addr + 8 + entry_count * 4) as u64,
-            &mut telem_data_block,
-        )?;
+
+        // The data array is indexed by each tag's offset, which is independent of
+        // entry_count, so size the block to cover the largest offset present.
+        let mut max_offset = 0u16;
+        for i in 0..entry_count as u16 {
+            let entry = u32_from_slice(&telemetry_tags_data_block, i);
+            let offset = ((entry >> 16) & 0xFFFF) as u16;
+            max_offset = max_offset.max(offset);
+        }
+        let mut telem_data_block: Vec<u8> = vec![0u8; (max_offset as usize + 1) * 4];
+        self.axi_read(telem_data_addr as u64, &mut telem_data_block)?;
 
         // Parse telemetry data
         let mut telemetry_data = super::Telemetry::default();
