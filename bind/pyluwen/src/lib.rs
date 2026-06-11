@@ -264,9 +264,15 @@ pub struct Telemetry {
     #[pyo3(get)]
     input_power: u32,
     #[pyo3(get)]
+    input_current: u32,
+    #[pyo3(get)]
     tdc_limit_max: u32,
     #[pyo3(get)]
     thm_limit_throttle: u32,
+    #[pyo3(get)]
+    fw_build_date: u32,
+    #[pyo3(get)]
+    enabled_tensix_row: u32,
     #[pyo3(get)]
     therm_trip_count: u32,
     #[pyo3(get)]
@@ -277,6 +283,22 @@ pub struct Telemetry {
     aiclk_limit_max: u32,
     #[pyo3(get)]
     tdp_limit_max: u32,
+    #[pyo3(get)]
+    aiclk_arb_min: u32,
+    #[pyo3(get)]
+    aiclk_arb_max: u32,
+    #[pyo3(get)]
+    enabled_min_arb: u32,
+    #[pyo3(get)]
+    enabled_max_arb: u32,
+    #[pyo3(get)]
+    aiclk_ppm_info: u32,
+    #[pyo3(get)]
+    host_aiclk_limit: u32,
+    #[pyo3(get)]
+    gddr_io_west_current: u32,
+    #[pyo3(get)]
+    gddr_io_east_current: u32,
 }
 impl From<luwen::api::chip::Telemetry> for Telemetry {
     fn from(value: luwen::api::chip::Telemetry) -> Self {
@@ -358,13 +380,24 @@ impl From<luwen::api::chip::Telemetry> for Telemetry {
             asic_location: value.asic_location,
             board_power_limit: value.board_power_limit,
             input_power: value.input_power,
+            input_current: value.input_current,
             tdc_limit_max: value.tdc_limit_max,
             thm_limit_throttle: value.thm_limit_throttle,
+            fw_build_date: value.fw_build_date,
+            enabled_tensix_row: value.enabled_tensix_row,
             therm_trip_count: value.therm_trip_count,
             asic_id_high: value.asic_id_high,
             asic_id_low: value.asic_id_low,
             aiclk_limit_max: value.aiclk_limit_max,
             tdp_limit_max: value.tdp_limit_max,
+            aiclk_arb_min: value.aiclk_arb_min,
+            aiclk_arb_max: value.aiclk_arb_max,
+            enabled_min_arb: value.enabled_min_arb,
+            enabled_max_arb: value.enabled_max_arb,
+            aiclk_ppm_info: value.aiclk_ppm_info,
+            host_aiclk_limit: value.host_aiclk_limit,
+            gddr_io_west_current: value.gddr_io_west_current,
+            gddr_io_east_current: value.gddr_io_east_current,
         }
     }
 }

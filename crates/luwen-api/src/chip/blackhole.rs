@@ -824,6 +824,7 @@ impl ChipImpl for Blackhole {
                     TelemetryTags::EnabledGddr => telemetry_data.enabled_gddr = data,
                     TelemetryTags::EnabledL2Cpu => telemetry_data.enabled_l2cpu = data,
                     TelemetryTags::PcieUsage => telemetry_data.enabled_pcie = data,
+                    TelemetryTags::InputCurrent => telemetry_data.input_current = data,
                     TelemetryTags::NocTranslation => {
                         telemetry_data.noc_translation_enabled = data != 0
                     }
@@ -843,11 +844,26 @@ impl ChipImpl for Blackhole {
                     TelemetryTags::InputPower => telemetry_data.input_power = data,
                     TelemetryTags::TdcLimitMax => telemetry_data.tdc_limit_max = data,
                     TelemetryTags::ThmLimitThrottle => telemetry_data.thm_limit_throttle = data,
+                    TelemetryTags::FwBuildDate => telemetry_data.fw_build_date = data,
+                    TelemetryTags::TtFlashVersion => telemetry_data.tt_flash_version = data,
+                    TelemetryTags::EnabledTensixRow => telemetry_data.enabled_tensix_row = data,
                     TelemetryTags::ThermTripCount => telemetry_data.therm_trip_count = data,
                     TelemetryTags::AsicIdHigh => telemetry_data.asic_id_high = data,
                     TelemetryTags::AsicIdLow => telemetry_data.asic_id_low = data,
                     TelemetryTags::AiclkLimitMax => telemetry_data.aiclk_limit_max = data,
                     TelemetryTags::TdpLimitMax => telemetry_data.tdp_limit_max = data,
+                    TelemetryTags::AiclkArbMin => telemetry_data.aiclk_arb_min = data,
+                    TelemetryTags::AiclkArbMax => telemetry_data.aiclk_arb_max = data,
+                    TelemetryTags::EnabledMinArb => telemetry_data.enabled_min_arb = data,
+                    TelemetryTags::EnabledMaxArb => telemetry_data.enabled_max_arb = data,
+                    TelemetryTags::AiclkPpmInfo => telemetry_data.aiclk_ppm_info = data,
+                    TelemetryTags::HostAiclkLimit => telemetry_data.host_aiclk_limit = data,
+                    TelemetryTags::GddrIoWestCurrent => {
+                        telemetry_data.gddr_io_west_current = data
+                    }
+                    TelemetryTags::GddrIoEastCurrent => {
+                        telemetry_data.gddr_io_east_current = data
+                    }
                     _ => (),
                 }
             }
